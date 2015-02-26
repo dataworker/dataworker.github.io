@@ -21,8 +21,9 @@
                     <ul class="nav" data-spy="affix" data-offset-top="85">
                         <li><a href="#top">DataWorker</a></li>
                         <li class="nav-header">Get started!</li>
-                        <li><a href="#construct">Construct</a></li>
+                        <li><a href="#local-data">Local Data</a></li>
                         <li><a href="#stream">Streaming Data</a></li>
+                        <li><a href="#webworkers">Web Workers</a></li>
                         <li><a href="#clone">Clone</a></li>
                         <li><a href="#child-rows">Child Rows</a></li>
                         <li><a href="#display-values">Display Values</a></li>
@@ -40,7 +41,6 @@
                         <li><a href="#sort">Sort</a></li>
                         <li><a href="#add-child-rows">Add Child Rows</a></li>
                         <li class="nav-header">Access the dataset!</li>
-                        <li><a href="#get-dataset">Get dataset</a></li>
                         <li><a href="#get-rows">Get rows</a></li>
                         <li><a href="#get-hashed-rows">Get hashed rows</a></li>
                         <li><a href="#get-columns">Get columns</a></li>
@@ -50,13 +50,22 @@
                         <li><a href="#pagination">Pagination</a></li>
                         <li><a href="#partition">Partition</a></li>
                         <li><a href="#render">Render</a></li>
+                        <li class="nav-header">Contribute!</li>
+                        <li><a href="#compile">Compile Code</a></li>
                         <li class="nav-header"></li>
                         <li><small><a href="#top">Back to top</a></small></li>
                     </ul>
                 </div>
                 <div class="span9">
-                    <section id="construct">
-                        <h3>Construct</h3>
+                    <section>
+                        <p>DataWorker is designed to manage large datasets client-side, using modern web technologies such as Web Workers and WebSockets. DataWorker allows users to perform expensive operations (such as sorting, joining, searching, filtering, grouping, and much more) in a multi-threaded environment to maintain responsiveness. Data can be provided locally as an array, or remotely via AJAX or WebSockets. DataWorker has no dependencies on external libraries, but works well with others.</p>
+                        <p>Not all browsers fully support all of the provided features (such as using a WebSocket from within a Web Worker) because some of the technology is quite new, so fallbacks are in place to make sure data can still be accessed across the most amount of devices possible.</p>
+                        <p>To get started, you will need to include one of the distribution files in the <code>dist/</code> folder: <code>dataworker.js</code> for development/testing, and <code>dataworker.min.js</code> for production. For example: </p>
+                        <pre>
+    &lt;script src="dist/dataworker.min.js"&gt;&lt;/script&gt;</pre>
+                    </section>
+                    <section id="local-data">
+                        <h3>Local Data</h3>
                         <p>DataWorker takes an array of records to construct the initial dataset. The first record defines column properties.</p>
                         <pre>
     var dataset = [
@@ -106,7 +115,11 @@
                             <li><code>aggType</code>: "max"</li>
                             <li><code>sortType</code>: "alpha"</li>
                         </ul>
-                        <p>Additionally, you should give DataWorker an error handler (otherwise DataWorker will just fail silently) using the <code>onError</code> method:</p>
+                        <p>Additionally, you should give DataWorker an error handler (by default DataWorker uses <code>console.error</code>) using the <code>onError</code> method or by adding it as a property on the dataset object:</p>
+                        <pre>
+    dataset.onError = function (msg) { alert(msg) };
+    new DataWorker(dataset);</pre>
+                        <p>or</p>
                         <pre>
     var dw = new DataWorker(dataset).onError(function (errorMsg) {
         alert(errorMsg);
@@ -216,12 +229,12 @@
         }
     });</pre>
                         <p><code>datasource</code> should be the base url to send GET requests to.</p>
-                        <p><code>request</code> should be the query string to append to the base url. The prepended question mark is optional; if it is missing, one will automatically be inserted. Optionally, <code>request</code> could be a JSON string; DataWorker will convert this into a query string.</p>
+                        <p><code>request</code> should be the query string to append to the base url. The prepended question mark is optional; if it is missing, one will automatically be inserted. Optionally, <code>request</code> could be a javascript object or a JSON string; DataWorker will convert this into a query string.</p>
                         <h5>Using fallbacks</h5>
                         <p>If multiple data sources exist, it is possible to provide fallbacks when instantiating DataWorker. This can be useful if you have a server down for maintenance or your WebSocket service is not running. Simply provide the possible sources as an array to <code>datasource</code> in priority order:</p>
                         <pre>
     var dw = new DataWorker({
-        request    : "{\"cmd\":\"requestDataset\"}",
+        request    : { cmd: "requestDataset" },
         datasource : [
             "http://example.com",
             "ws://127.0.0.1:8888",
@@ -294,6 +307,24 @@
         datasource       : "ws://127.0.0.1:8888",
         authenticate     : "{}",
         onTrigger: function (reply) { alert(reply) }
+    });</pre>
+                    </section>
+                    <section id="webworkers">
+                        <h3>Web Workers</h3>
+                        <p>Web Workers are enabled by default, to get the most performance out of DataWorker. Without any extra configuration, a Blob will be used to create the Web Worker. However, some browsers do not support remote data from within a Web Worker created in that fashion, though they work fine when created using a standard URL. DataWorker will detect these errors and look for a file named <code>dw-helper.js</code> in the same folder as <code>dw.js</code>. THe method used to determine the source path does not work well in some circumstances, for example when a module loader like RequireJS. To provide alternative sources, extra options can be provided when instantiating DataWorker.</p>
+                        <p>If <code>workerSource</code> is provided, it will be used first. If that source fails to create a Web Worker, or an error occurs on connection to the datasource, a Blob will be created next to try again. If the Blob fails, then <code>backupWorkerSource</code> will be used next. If that fails, or wasn't provided, DataWorker will make it's best guess as to the location of <code>dw-helper.js</code>. When all else fails, DataWorker will revert to a single-threaded environment. Finally, an error will be thrown if a connection still cannot be made and no local dataset is provided.</p>
+                        <pre>
+    new DataWorker({
+        datasource: "http://example.com/dataset.json",
+        workerSource: "/path/to/dw-helper.js",
+        backupWorkerSource: "/other/path/to/dw-helper.js"
+    });</pre>
+                        <p>There is an initial cost to creating a Web Worker, and they are meant to stay alive as long as possible. This can be important for avoiding memory leaks in single page applications. Rather than terminating a Web Worker, DataWorkerHelper is designed to idle when not in use and be reused when needed. To clean up an instance of DataWorker, simply call <code>finish(optionalCallback)</code> on the instance. If a callback is included it will be called once the Web Worker has responded that it is ready to be reused. Simply creating a new DataWorker will reuse that Web Worker.</p>
+                        <p>Web Workers are still an experimental technology, and may have some issues. If you prefer to avoid using Web Workers at all, you may pass in a flag to force it to be single-threaded.</p>
+                        <pre>
+    new DataWorker({
+        datasource: "http://example.com/dataset.json",
+        forceSingleThread: true
     });</pre>
                     </section>
                     <section id="clone">
@@ -666,7 +697,7 @@
     var d2 = DataWorker([[ "letters", "numbers" ]].concat(childRows), "letters");
 
     dw.addChildRows(d2);</pre>
-                        <p>In either case, the result passed into the callback for <code>getDataset</code> will be the same:</p>
+                        <p>In either case, the result passed into the callback for <code>getRows</code> will be the same:</p>
                         <pre>
     [
         [ "abc", 123 ],
@@ -679,10 +710,10 @@
                         <p>The default visibility for a child row depends on its parent. If the parent row was set to hidden then the child row will still be added to the parent, but will be hidden as well.</p>
                         <p>If a parent row cannot be found for the children, those child rows will be ignored. If multiple parent rows exist for a given child row, the result is undefined.</p>
                     </section>
-                    <section id="get-dataset" class="muted">
-                        <h3>Get dataset</h3>
-                        <p><strong>This function is deprecated as of v2.0 and will be removed in v3.0. Please use <a href="#get-rows">getRows</a> instead.</strong></p>
-                        <p>Visible dataset rows can be retrieved for use via the <code>getDataset</code> method.</p>
+                    <section id="get-rows">
+                        <h3>Get rows</h3>
+                        <p>Visible dataset rows can be retrieved for use via the <code>getRows</code> method.</p>
+                        <p>If called with just the callback function, <code>getRows</code> will get all rows. The next two arguments are the start and end of the range. If unspecified, they are the start and end of the dataset. These arguments are 0-based, so a dataset with 15 rows will have rows 0 - 14. If a number larger than the last row is used DataWorker will simply return anything in the range <i>up to</i> (and including) the last row.</p>
                         <pre>
     var dataset = [
         [ "column_a", "column_b", "column_c" ],
@@ -696,7 +727,7 @@
     var dw = new DataWorker(dataset);
     var records;
 
-    dw.getDataset(function (result) { records = result; });</pre>
+    dw.getRows(function (result) { records = result; });</pre>
                         <p>The following is the contents of <code>records</code>:</p>
                         <pre>
     [
@@ -705,29 +736,7 @@
         [ "banana",      "piano",      "gum" ],
         [ "gummy",       "power",     "star" ]
     ]</pre>
-                        <p>The <code>getDataset</code> method can also grab only specified rows:</p>
-                        <pre>
-    dw.getDataset(function (result) { records = result; }, "column_a", "column_b");</pre>
-                        <p>The following would be the contents of <code>records</code>:</p>
-                        <pre>
-    [
-        [ "apple",      "violin" ],
-        [ "cat",        "tissue" ],
-        [ "banana",      "piano" ],
-        [ "gummy",       "power" ]
-    ]</pre>
-                        <p>Note that the following does the same thing as the preceding sample:</p>
-                        <pre>
-    dw.getDataset(
-        function (result) { records = result; },
-        [ "column_a", "column_b" ]
-    );</pre>
-                    </section>
-                    <section id="get-rows">
-                        <h3>Get rows</h3>
-                        <p>Another function to fetch rows is <code>getRows</code>. This function works the same as <code>getDataset</code> except that it allows for a range of rows</p>
-                        <p>If called with just the callback function, <code>getRows</code> will get all rows. The next two arguments are the start and end of the range. If unspecified, they are the start and end of the dataset. These arguments are 0-based, so a dataset with 15 rows will have rows 0 - 14. If a number larger than the last row is used DataWorker will simply return anything in the range <i>up to</i> (and including) the last row.</p>
-                        <p>Like <code>getDataset</code>, <code>getRows</code> may also specify the columns. All of the following calls to getRows are valid examples:</p>
+                        <p>If you would only like certain columns, you may provide those columns after the range of rows, either as an array or as extra arguments. All of the following calls to getRows are valid examples:</p>
                         <pre>
     var callback = function (rows) { /* Do something */ };
 
@@ -798,7 +807,7 @@
         // Do something.
     });</pre>
                         <p>Columns will be given as a dictionary with the <code>columnName</code> as the key and its properties (also in a dictionary) as the value.</p>
-                        <p>Records will be returned the same as in <code>getDataset</code>.</p>
+                        <p>Records will be returned the same as in <code>getRows</code>.</p>
                     </section>
                     <section id="get-number-of-records">
                         <h3>Get number of records</h3>
@@ -860,7 +869,7 @@
                     </section>
                     <section id="pagination">
                         <h3>Pagination</h3>
-                        <p>Pagination eases incremental of the records. The following sets DataWorker to display 10 rows per page</p>
+                        <p>Pagination eases incremental access of the records. The following sets DataWorker to display 10 rows per page</p>
                         <pre>
     dw.paginate(10);</pre>
                         <h5>Get next page</h5>
@@ -922,8 +931,10 @@
 
     dw.partition("column_a");
 
-    dw.getPartitionKeys().forEach(function (key) {
-        dw.getPartitioned(function (result) { partitioned.push(result); }, key);
+    dw.getPartitionKeys(function (keys) {
+        keys.forEach(function (key) {
+            dw.getPartitioned(function (result) { partitioned.push(result); }, key);
+        });
     });</pre>
                         <p>They <code>getPartitioned</code> method returns an array of records.</code>
                         <p>You may also partition by multiple keys:</p>
@@ -945,6 +956,10 @@
     /* Make some changes to the dataset. */
 
     dw.render(); // Renders the new dataset according to the user-defined function.</pre>
+                    </section>
+                    <section id="compile">
+                        <h3>Compile</h3>
+                        <p>To generate the distribution files, we use the node module <code>grunt</code>. If you would like to play around with the source and create your own distribution files, you must first have <a href="http://nodejs.org">node.js</a> and <a href="http://npmjs.com">NPM</a> installed on your machine. From the DataWorker's root directory, run the command <code>npm install</code> in order to get the latest dev dependencies for the package. Then type <code>grunt dist</code> to generate the distribution files. You may also type <code>grunt watch</code> instead, which will automatically generate new distribution files whenever you change one of the source files.</p>
                     </section>
                 </div>
             </div>
