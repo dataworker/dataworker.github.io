@@ -1,22 +1,109 @@
-h1 {
-    text-align: center;
+@import 'https://fonts.googleapis.com/css?family=Roboto+Mono';
+
+code, kbd, pre, samp {
+  font-family: 'Roboto Mono', monospace;
 }
 
-#side-nav > ul {
-    width: 200px;
-    height: 95%;
-    overflow-y: auto;
+code {
+  white-space: nowrap;
 }
 
-#side-nav > ul > li.active {
-    background: #d9edf7;
+pre code {
+  border: none;
+  white-space: pre;
 }
 
-#side-nav > .affix { top: 7px; }
-
-.header-row {
-    border-style: solid;
-    border-width: 1px;
-    margin-top: 15px;
-    margin-bottom: 15px;
+main {
+  margin-top: 68px;
+  margin-bottom: 68px;
 }
+
+.menu-content {
+  padding-top: 0;
+}
+
+.menu-content .nav a.menu-logo {
+  font-weight: 300;
+  min-height: 56px;
+}
+
+.fbtn-container.not-visible .fbtn {
+  -webkit-transform: scale(0,0);
+          transform: scale(0,0);
+}
+
+.fbtn-container.not-visible .fbtn .icon {
+  opacity: 0;
+  -webkit-transform: rotate(220deg);
+          transform: rotate(220deg);
+}
+
+section[id]::before {
+  content: " ";
+  display: block;
+  height: 68px; /* 56 + 12 = 68 */
+  margin-top: -68px; /* 56 + 24 = 80 */
+  visibility: none;
+}
+
+section[id] > .card {
+  margin-top: 0;
+}
+
+.card-sub-heading {
+  display: block;
+  font-size: 18px;
+  line-height: 28px;
+  margin-top: 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.12);
+}
+
+.page-brand .content-sub-heading.card-sub-heading {
+  color: rgba(63,81,181,.8);
+  box-shadow: 0 1px 0 rgba(63,81,181,.24);
+}
+
+@media only screen and (min-width: 992px) {
+  header.header {
+    padding-left: 256px;
+  }
+}
+
+[tooltip] {
+  position: relative;
+}
+
+[tooltip]::before {
+  content: attr(alt);
+  display: inline;
+  position: absolute;
+  font-size: 12px;
+  color: white;
+  background-color: black;
+  background-color: rgba(0,0,0,.8);
+  border-radius: .5em;
+  padding: .5em;
+  white-space: nowrap;
+  top: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition-duration: .2s;
+  transition-delay: 0;
+  pointer-events: none;
+}
+
+[tooltip]:hover::before {
+  opacity: 1;
+  visibility: visible;
+  z-index: 9999;
+  
+  transition-delay: .3s;
+}
+
+[tooltip][top]::before { top: 0; bottom: 45px; }
+[tooltip][right]::before { left: 10px; }
+[tooltip][far-right]::before { left: 65px; }
+[tooltip][bottom]::before { top: 45px; }
+[tooltip][left]::before { right: 10px; }
+[tooltip][far-left]::before { right: 65px; }
